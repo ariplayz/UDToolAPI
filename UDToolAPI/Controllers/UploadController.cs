@@ -9,8 +9,8 @@ namespace UDToolAPI.Controllers
     {
         private static readonly string TempPath = Path.Combine(Path.GetTempPath(), "UDToolAPI");
 
-        [HttpPost]
-        public async Task<IActionResult> Upload(IFormFile file)
+        [HttpPost("{fileName}")]
+        public async Task<IActionResult> Upload(IFormFile file, string fileName)
         {
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded.");
@@ -18,23 +18,27 @@ namespace UDToolAPI.Controllers
             // Ensure the directory exists
             Directory.CreateDirectory(TempPath);
 
-            var filePath = Path.Combine(TempPath, file.FileName);
+            var filePath = Path.Combine(TempPath, fileName);
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
             }
-            // Here you can add code to process the uploaded file as needed
             return Ok(new { message = "File uploaded successfully.", filePath });
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Download()
+        [HttpGet("{fileName}")]
+        public IActionResult Download(string fileName)
         {
-            if (!Directory.Exists(TempPath))
-                return NotFound("No files directory found.");
+            if (string.IsNullOrEmpty(fileName))
+                return BadRequest("File name is required.");
 
-            var files = Directory.GetFiles(TempPath);
-            return Ok(files);
+            var filePath = Path.Combine(TempPath, fileName);
+
+            if (!System.IO.File.Exists(filePath))
+                return NotFound("File not found.");
+
+            var fileBytes = System.IO.File.ReadAllBytes(filePath);
+            return File(fileBytes, "application/octet-stream", fileName);
         }
     }
 }
