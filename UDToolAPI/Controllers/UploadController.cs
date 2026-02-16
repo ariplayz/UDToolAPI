@@ -3,16 +3,22 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace UDToolAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("")]
     [ApiController]
     public class UploadController : ControllerBase
     {
+        private static readonly string TempPath = Path.Combine(Path.GetTempPath(), "UDToolAPI");
+
         [HttpPost]
         public async Task<IActionResult> Upload(IFormFile file)
         {
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded.");
-            var filePath = Path.Combine(Path.GetTempPath(), file.FileName);
+
+            // Ensure the directory exists
+            Directory.CreateDirectory(TempPath);
+
+            var filePath = Path.Combine(TempPath, file.FileName);
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
@@ -24,9 +30,11 @@ namespace UDToolAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> Download()
         {
-            var files = Directory.GetFiles(Path.GetTempPath());
-            return Ok(files);
+            if (!Directory.Exists(TempPath))
+                return NotFound("No files directory found.");
 
+            var files = Directory.GetFiles(TempPath);
+            return Ok(files);
         }
     }
 }
