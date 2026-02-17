@@ -40,5 +40,14 @@ namespace UDToolAPI.Controllers
             var fileBytes = System.IO.File.ReadAllBytes(filePath);
             return File(fileBytes, "application/octet-stream", fileName);
         }
+        [HttpGet("search/{searchTerm}")]
+        public IActionResult Search(string searchTerm)
+        {
+            if (string.IsNullOrEmpty(searchTerm))
+                return BadRequest("Search term is required.");
+            var files = Directory.GetFiles(TempPath, $"*{searchTerm}*");
+            var fileNames = files.Select(Path.GetFileName).ToArray();
+            return Ok(fileNames);
+        }
     }
 }

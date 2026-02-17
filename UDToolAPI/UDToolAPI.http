@@ -1,6 +1,0 @@
-@UDToolAPI_HostAddress = http://localhost:5128
-
-GET {{UDToolAPI_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
