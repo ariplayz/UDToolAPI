@@ -21,8 +21,14 @@ namespace UDToolAPI
             builder.Services.Configure<FormOptions>(options =>
             {
                 options.MultipartBodyLengthLimit = long.MaxValue;
+                options.MultipartHeadersLengthLimit = int.MaxValue;
                 options.ValueLengthLimit = int.MaxValue;
                 options.MemoryBufferThreshold = int.MaxValue;
+            });
+
+            builder.Services.Configure<IISServerOptions>(options =>
+            {
+                options.MaxRequestBodySize = long.MaxValue;
             });
 
             // Add Swashbuckle services
