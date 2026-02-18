@@ -8,6 +8,12 @@ namespace UDToolAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // Configure Kestrel to allow large uploads
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Limits.MaxRequestBodySize = long.MaxValue;
+            });
+
             // Add services to the container.
             builder.Services.AddControllers();
 
@@ -15,6 +21,8 @@ namespace UDToolAPI
             builder.Services.Configure<FormOptions>(options =>
             {
                 options.MultipartBodyLengthLimit = long.MaxValue;
+                options.ValueLengthLimit = int.MaxValue;
+                options.MemoryBufferThreshold = int.MaxValue;
             });
 
             // Add Swashbuckle services
