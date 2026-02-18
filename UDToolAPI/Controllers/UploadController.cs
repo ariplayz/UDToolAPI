@@ -8,7 +8,12 @@ namespace UDToolAPI.Controllers
     public class UploadController : ControllerBase
     {
         private static readonly string TempPath = Path.Combine(Path.GetTempPath(), "UDToolAPI");
-        private static readonly string KeysPath = "keys.txt";
+        private static readonly string KeysPath = Path.Combine(TempPath, "keys.txt");
+
+        private string GetKeyPath(string key)
+        {
+            return Path.Combine(TempPath, key);
+        }
 
         [HttpGet("/key/check/{key}")]
         public IActionResult GetKey(string key)
@@ -58,9 +63,10 @@ namespace UDToolAPI.Controllers
                     if (file == null || file.Length == 0)
                         return BadRequest("No file uploaded.");
 
-                    Directory.CreateDirectory(TempPath);
+                    var keyPath = GetKeyPath(key);
+                    Directory.CreateDirectory(keyPath);
 
-                    var filePath = Path.Combine(TempPath, fileName);
+                    var filePath = Path.Combine(keyPath, fileName);
                     using (var stream = new FileStream(filePath, FileMode.Create))
                     {
                         await file.CopyToAsync(stream);
@@ -91,10 +97,11 @@ namespace UDToolAPI.Controllers
                 var keys = System.IO.File.ReadAllLines(KeysPath);
                 if (keys.Contains(key))
                 {
-                    if (!Directory.Exists(TempPath))
+                    var keyPath = GetKeyPath(key);
+                    if (!Directory.Exists(keyPath))
                         return Ok(new List<string>());
 
-                    var fileNames = Directory.GetFiles(TempPath)
+                    var fileNames = Directory.GetFiles(keyPath)
                         .Select(Path.GetFileName)
                         .ToList();
                     return Ok(fileNames);
@@ -126,7 +133,8 @@ namespace UDToolAPI.Controllers
                 var keys = System.IO.File.ReadAllLines(KeysPath);
                 if (keys.Contains(key))
                 {
-                    var filePath = Path.Combine(TempPath, fileName);
+                    var keyPath = GetKeyPath(key);
+                    var filePath = Path.Combine(keyPath, fileName);
 
                     if (!System.IO.File.Exists(filePath))
                         return NotFound("File not found.");
@@ -161,7 +169,8 @@ namespace UDToolAPI.Controllers
                 var keys = System.IO.File.ReadAllLines(KeysPath);
                 if (keys.Contains(key))
                 {
-                    var files = Directory.GetFiles(TempPath, $"*{searchTerm}*");
+                    var keyPath = GetKeyPath(key);
+                    var files = Directory.GetFiles(keyPath, $"*{searchTerm}*");
                     var fileNames = files.Select(Path.GetFileName).ToArray();
                     return Ok(fileNames);
                 }
@@ -192,7 +201,8 @@ namespace UDToolAPI.Controllers
                 var keys = System.IO.File.ReadAllLines(KeysPath);
                 if (keys.Contains(key))
                 {
-                    var filePath = Path.Combine(TempPath, fileName);
+                    var keyPath = GetKeyPath(key);
+                    var filePath = Path.Combine(keyPath, fileName);
 
                     if (!System.IO.File.Exists(filePath))
                         return NotFound("File not found.");
