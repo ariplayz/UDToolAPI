@@ -9,6 +9,12 @@ namespace UDToolAPI.Controllers
     {
         private static readonly string TempPath = Path.Combine(Path.GetTempPath(), "UDToolAPI");
         private static readonly string KeysPath = Path.Combine(TempPath, "keys.txt");
+        private static readonly string ApiKeyHeaderName = "API-Key";
+
+        private string? GetApiKeyFromHeader()
+        {
+            return Request.Headers[ApiKeyHeaderName].ToString();
+        }
 
         private string GetKeyPath(string key)
         {
@@ -49,11 +55,13 @@ namespace UDToolAPI.Controllers
         }
 
         // Endpoint to upload a file with a specific name
-        [HttpPost("{key}/{fileName}")]
-        public async Task<IActionResult> Upload(IFormFile file, string key, string fileName)
+        [HttpPost("{fileName}")]
+        public async Task<IActionResult> Upload(IFormFile file, string fileName)
         {
+            var key = GetApiKeyFromHeader();
+
             if (string.IsNullOrEmpty(key))
-                return BadRequest("Key is required.");
+                return BadRequest("API key is required.");
 
             if (System.IO.File.Exists(KeysPath))
             {
@@ -75,22 +83,24 @@ namespace UDToolAPI.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new { message = "Key is not valid.", key });
+                    return Unauthorized(new { message = "Key is not valid." });
                 }
             }
             else
             {
                 System.IO.File.Create(KeysPath).Dispose();
-                return Unauthorized(new { message = "Key is not valid.", key });
+                return Unauthorized(new { message = "Key is not valid." });
             }
         }
 
         // Endpoint to list all files in the temp directory
-        [HttpGet("{key}/list")]
-        public IActionResult List(string key)
+        [HttpGet("list")]
+        public IActionResult List()
         {
+            var key = GetApiKeyFromHeader();
+
             if (string.IsNullOrEmpty(key))
-                return BadRequest("Key is required.");
+                return BadRequest("API key is required.");
 
             if (System.IO.File.Exists(KeysPath))
             {
@@ -108,22 +118,24 @@ namespace UDToolAPI.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new { message = "Key is not valid.", key });
+                    return Unauthorized(new { message = "Key is not valid." });
                 }
             }
             else
             {
                 System.IO.File.Create(KeysPath).Dispose();
-                return Unauthorized(new { message = "Key is not valid.", key });
+                return Unauthorized(new { message = "Key is not valid." });
             }
         }
 
         // Endpoint to download a file by name
-        [HttpGet("{key}/{fileName}")]
-        public IActionResult Download(string key, string fileName)
+        [HttpGet("{fileName}")]
+        public IActionResult Download(string fileName)
         {
+            var key = GetApiKeyFromHeader();
+
             if (string.IsNullOrEmpty(key))
-                return BadRequest("Key is required.");
+                return BadRequest("API key is required.");
 
             if (string.IsNullOrEmpty(fileName))
                 return BadRequest("File name is required.");
@@ -144,22 +156,24 @@ namespace UDToolAPI.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new { message = "Key is not valid.", key });
+                    return Unauthorized(new { message = "Key is not valid." });
                 }
             }
             else
             {
                 System.IO.File.Create(KeysPath).Dispose();
-                return Unauthorized(new { message = "Key is not valid.", key });
+                return Unauthorized(new { message = "Key is not valid." });
             }
         }
 
         // Endpoint to find files containing the search term in their name
-        [HttpGet("{key}/search/{searchTerm}")]
-        public IActionResult Search(string key, string searchTerm)
+        [HttpGet("search/{searchTerm}")]
+        public IActionResult Search(string searchTerm)
         {
+            var key = GetApiKeyFromHeader();
+
             if (string.IsNullOrEmpty(key))
-                return BadRequest("Key is required.");
+                return BadRequest("API key is required.");
 
             if (string.IsNullOrEmpty(searchTerm))
                 return BadRequest("Search term is required.");
@@ -176,22 +190,24 @@ namespace UDToolAPI.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new { message = "Key is not valid.", key });
+                    return Unauthorized(new { message = "Key is not valid." });
                 }
             }
             else
             {
                 System.IO.File.Create(KeysPath).Dispose();
-                return Unauthorized(new { message = "Key is not valid.", key });
+                return Unauthorized(new { message = "Key is not valid." });
             }
         }
 
         // Endpoint to delete a file by name
-        [HttpDelete("{key}/{fileName}")]
-        public IActionResult Delete(string key, string fileName)
+        [HttpDelete("{fileName}")]
+        public IActionResult Delete(string fileName)
         {
+            var key = GetApiKeyFromHeader();
+
             if (string.IsNullOrEmpty(key))
-                return BadRequest("Key is required.");
+                return BadRequest("API key is required.");
 
             if (string.IsNullOrEmpty(fileName))
                 return BadRequest("File name is required.");
@@ -213,13 +229,13 @@ namespace UDToolAPI.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new { message = "Key is not valid.", key });
+                    return Unauthorized(new { message = "Key is not valid." });
                 }
             }
             else
             {
                 System.IO.File.Create(KeysPath).Dispose();
-                return Unauthorized(new { message = "Key is not valid.", key });
+                return Unauthorized(new { message = "Key is not valid." });
             }
         }
     }
