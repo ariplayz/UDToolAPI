@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http.Features;
+
 namespace UDToolAPI
 {
     public class Program
@@ -8,6 +10,12 @@ namespace UDToolAPI
 
             // Add services to the container.
             builder.Services.AddControllers();
+
+            // Configure to allow large file uploads (no limit)
+            builder.Services.Configure<FormOptions>(options =>
+            {
+                options.MultipartBodyLengthLimit = long.MaxValue;
+            });
 
             // Add Swashbuckle services
             builder.Services.AddEndpointsApiExplorer();
