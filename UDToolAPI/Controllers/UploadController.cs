@@ -8,79 +8,209 @@ namespace UDToolAPI.Controllers
     public class UploadController : ControllerBase
     {
         private static readonly string TempPath = Path.Combine(Path.GetTempPath(), "UDToolAPI");
+        private static readonly string KeysPath = "keys.txt";
+
+        [HttpGet("/key/check/{key}")]
+        public IActionResult GetKey(string key)
+        {
+            if (string.IsNullOrEmpty(key))
+                return BadRequest("Key is required.");
+            
+            if (System.IO.File.Exists(KeysPath))
+            {
+                var keys = System.IO.File.ReadAllLines(KeysPath);
+                if (keys.Contains(key))
+                {
+                    return Ok(new { message = "Key is valid.", key });
+                }
+                else
+                {
+                    return Ok(new { message = "Key is not valid.", key });
+                }
+            }
+            else
+            {
+                System.IO.File.Create(KeysPath).Dispose();
+                return Ok(new { message = "Key is not valid.", key });
+            }
+        }
+
+        [HttpPost("/key/new")]
+        public IActionResult CreateKey()
+        {
+            var newKey = Guid.NewGuid().ToString();
+            System.IO.File.AppendAllLines(KeysPath, new[] { newKey });
+            return Ok(new { message = "New key created successfully.", key = newKey });
+        }
 
         // Endpoint to upload a file with a specific name
-        [HttpPost("{fileName}")]
-        public async Task<IActionResult> Upload(IFormFile file, string fileName)
+        [HttpPost("{key}/{fileName}")]
+        public async Task<IActionResult> Upload(IFormFile file, string key, string fileName)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest("No file uploaded.");
+            if (string.IsNullOrEmpty(key))
+                return BadRequest("Key is required.");
 
-            Directory.CreateDirectory(TempPath);
-
-            var filePath = Path.Combine(TempPath, fileName);
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            if (System.IO.File.Exists(KeysPath))
             {
-                await file.CopyToAsync(stream);
+                var keys = System.IO.File.ReadAllLines(KeysPath);
+                if (keys.Contains(key))
+                {
+                    if (file == null || file.Length == 0)
+                        return BadRequest("No file uploaded.");
+
+                    Directory.CreateDirectory(TempPath);
+
+                    var filePath = Path.Combine(TempPath, fileName);
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await file.CopyToAsync(stream);
+                    }
+                    return Ok(new { message = "File uploaded successfully.", filePath });
+                }
+                else
+                {
+                    return Unauthorized(new { message = "Key is not valid.", key });
+                }
             }
-            return Ok(new { message = "File uploaded successfully.", filePath });
+            else
+            {
+                System.IO.File.Create(KeysPath).Dispose();
+                return Unauthorized(new { message = "Key is not valid.", key });
+            }
         }
 
         // Endpoint to list all files in the temp directory
-        [HttpGet("list")]
-        public IActionResult List()
+        [HttpGet("{key}/list")]
+        public IActionResult List(string key)
         {
-            if (!Directory.Exists(TempPath))
-                return Ok(new List<string>());
+            if (string.IsNullOrEmpty(key))
+                return BadRequest("Key is required.");
 
-            var fileNames = Directory.GetFiles(TempPath)
-                .Select(Path.GetFileName)
-                .ToList();
-            return Ok(fileNames);
+            if (System.IO.File.Exists(KeysPath))
+            {
+                var keys = System.IO.File.ReadAllLines(KeysPath);
+                if (keys.Contains(key))
+                {
+                    if (!Directory.Exists(TempPath))
+                        return Ok(new List<string>());
+
+                    var fileNames = Directory.GetFiles(TempPath)
+                        .Select(Path.GetFileName)
+                        .ToList();
+                    return Ok(fileNames);
+                }
+                else
+                {
+                    return Unauthorized(new { message = "Key is not valid.", key });
+                }
+            }
+            else
+            {
+                System.IO.File.Create(KeysPath).Dispose();
+                return Unauthorized(new { message = "Key is not valid.", key });
+            }
         }
 
         // Endpoint to download a file by name
-        [HttpGet("{fileName}")]
-        public IActionResult Download(string fileName)
+        [HttpGet("{key}/{fileName}")]
+        public IActionResult Download(string key, string fileName)
         {
+            if (string.IsNullOrEmpty(key))
+                return BadRequest("Key is required.");
+
             if (string.IsNullOrEmpty(fileName))
                 return BadRequest("File name is required.");
 
-            var filePath = Path.Combine(TempPath, fileName);
+            if (System.IO.File.Exists(KeysPath))
+            {
+                var keys = System.IO.File.ReadAllLines(KeysPath);
+                if (keys.Contains(key))
+                {
+                    var filePath = Path.Combine(TempPath, fileName);
 
-            if (!System.IO.File.Exists(filePath))
-                return NotFound("File not found.");
+                    if (!System.IO.File.Exists(filePath))
+                        return NotFound("File not found.");
 
-            var fileBytes = System.IO.File.ReadAllBytes(filePath);
-            return File(fileBytes, "application/octet-stream", fileName);
+                    var fileBytes = System.IO.File.ReadAllBytes(filePath);
+                    return File(fileBytes, "application/octet-stream", fileName);
+                }
+                else
+                {
+                    return Unauthorized(new { message = "Key is not valid.", key });
+                }
+            }
+            else
+            {
+                System.IO.File.Create(KeysPath).Dispose();
+                return Unauthorized(new { message = "Key is not valid.", key });
+            }
         }
 
         // Endpoint to find files containing the search term in their name
-        [HttpGet("search/{searchTerm}")]
-        public IActionResult Search(string searchTerm)
+        [HttpGet("{key}/search/{searchTerm}")]
+        public IActionResult Search(string key, string searchTerm)
         {
+            if (string.IsNullOrEmpty(key))
+                return BadRequest("Key is required.");
+
             if (string.IsNullOrEmpty(searchTerm))
                 return BadRequest("Search term is required.");
-            var files = Directory.GetFiles(TempPath, $"*{searchTerm}*");
-            var fileNames = files.Select(Path.GetFileName).ToArray();
-            return Ok(fileNames);
+
+            if (System.IO.File.Exists(KeysPath))
+            {
+                var keys = System.IO.File.ReadAllLines(KeysPath);
+                if (keys.Contains(key))
+                {
+                    var files = Directory.GetFiles(TempPath, $"*{searchTerm}*");
+                    var fileNames = files.Select(Path.GetFileName).ToArray();
+                    return Ok(fileNames);
+                }
+                else
+                {
+                    return Unauthorized(new { message = "Key is not valid.", key });
+                }
+            }
+            else
+            {
+                System.IO.File.Create(KeysPath).Dispose();
+                return Unauthorized(new { message = "Key is not valid.", key });
+            }
         }
 
         // Endpoint to delete a file by name
-        [HttpDelete("{fileName}")]
-        public IActionResult Delete(string fileName)
+        [HttpDelete("{key}/{fileName}")]
+        public IActionResult Delete(string key, string fileName)
         {
+            if (string.IsNullOrEmpty(key))
+                return BadRequest("Key is required.");
+
             if (string.IsNullOrEmpty(fileName))
                 return BadRequest("File name is required.");
 
-            var filePath = Path.Combine(TempPath, fileName);
+            if (System.IO.File.Exists(KeysPath))
+            {
+                var keys = System.IO.File.ReadAllLines(KeysPath);
+                if (keys.Contains(key))
+                {
+                    var filePath = Path.Combine(TempPath, fileName);
 
-            if (!System.IO.File.Exists(filePath))
-                return NotFound("File not found.");
+                    if (!System.IO.File.Exists(filePath))
+                        return NotFound("File not found.");
 
-            System.IO.File.Delete(filePath);
+                    System.IO.File.Delete(filePath);
 
-            return Ok(new { message = "File deleted successfully." });
+                    return Ok(new { message = "File deleted successfully." });
+                }
+                else
+                {
+                    return Unauthorized(new { message = "Key is not valid.", key });
+                }
+            }
+            else
+            {
+                System.IO.File.Create(KeysPath).Dispose();
+                return Unauthorized(new { message = "Key is not valid.", key });
+            }
         }
     }
 }
