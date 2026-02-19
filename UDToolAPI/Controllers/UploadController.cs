@@ -151,8 +151,8 @@ namespace UDToolAPI.Controllers
                     if (!System.IO.File.Exists(filePath))
                         return NotFound("File not found.");
 
-                    var fileBytes = System.IO.File.ReadAllBytes(filePath);
-                    return File(fileBytes, "application/octet-stream", fileName);
+                    var stream = System.IO.File.OpenRead(filePath);
+                    return File(stream, "application/octet-stream", fileName, enableRangeProcessing: true);
                 }
                 else
                 {
