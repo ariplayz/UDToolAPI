@@ -1,5 +1,5 @@
 # UDToolAPI
 
 ## Other Repositories
-- [**ASP.NET API**](https://github.com/ariplayz/UDToolAPI)
+- [**UDTool Desktop**](https://github.com/ariplayz/UDTool-Desktop)
 - [**UDTool CLI**](https://github.com/ariplayz/UDTool)
